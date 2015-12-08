@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: authentication
+#  cloud:
+#    config:
+#      discovery:
+#        service-id: config-server
+#        enabled: true
+        
+logging:
+  level:
+    org.springframework.cloud: 'DEBUG'   
+    org.springframework.security: DEBUG     
+    
+#eureka:
+#  instance:
+#    lease-renewal-interval-in-seconds: 10
+#    lease-expiration-duration-in-seconds: 10
+#    prefer-ip-address: true
+#  client:
+#    service-url:
+#      defaultZone: http://discovery:8761/eureka/ 

@@ -1,0 +1,20 @@
+server:
+  port: 9999
+  context-path: /uaa
+    
+myapp:
+  client:
+    name: myapp
+    secret: myapps3cr3t
+    scope: myapp
+  keystore:
+    name: myapp.jks
+    pass: myapp@uthk3y5tor3
+  key:
+    name: myappkey
+    pass: myapp@uthk3y
+  ldap:
+#    url: "ldap://127.0.0.1:10389/dc=myapp,dc=online"
+    ldif: "classpath:test.ldif"
+    user-dn-patterns: "uid={0}, ou=people"
+    group: "ou=groups"

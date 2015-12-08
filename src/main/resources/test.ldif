@@ -1,0 +1,39 @@
+dn: ou=groups,dc=springframework,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: groups
+
+dn: ou=subgroups,ou=groups,dc=springframework,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: subgroups
+
+dn: ou=people,dc=springframework,dc=org
+objectclass: top
+objectclass: organizationalUnit
+ou: people
+
+dn: uid=fairuz.ismail,ou=people,dc=springframework,dc=org
+objectclass: top
+objectclass: person
+objectclass: organizationalPerson
+objectclass: inetOrgPerson
+cn: Fairuz Ismail
+sn: Fairuz
+uid: fairuz.ismail
+userPassword: password2015
+
+dn: cn=administrators,ou=groups,dc=springframework,dc=org
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: administrators
+ou: administrator
+uniqueMember: uid=fairuz.ismail,ou=people,dc=springframework,dc=org
+
+dn: cn=myappusers,ou=groups,dc=springframework,dc=org
+objectclass: top
+objectclass: groupOfUniqueNames
+cn: myappusers
+ou: myappuser
+uniqueMember: uid=fairuz.ismail,ou=people,dc=springframework,dc=org
+
