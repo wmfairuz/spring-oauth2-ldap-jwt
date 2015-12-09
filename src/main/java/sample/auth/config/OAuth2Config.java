@@ -9,6 +9,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
+import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
+import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
+import org.springframework.security.ldap.userdetails.LdapUserDetailsService;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
@@ -42,6 +46,21 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
 	@Value("${myapp.key.pass:keypass}")
     private String keypass;
 	
+	@Value("${myapp.ldap.url}")
+    private String ldapUrl;
+	
+	@Value("${myapp.ldap.user-dn-patterns}")
+    private String ldapUserDnPatterns;
+	
+	@Value("${myapp.ldap.user-search-base}")
+    private String ldapUserSearchBase;
+	
+	@Value("${myapp.ldap.group-search-base}")
+    private String ldapGroupSearchBase;
+	
+	@Value("${myapp.ldap.group-search-filter}")
+    private String ldapGroupSearchFilter;
+	
 	@Autowired
 	@Qualifier("authenticationManagerBean")
 	private AuthenticationManager authenticationManager;
@@ -62,8 +81,31 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {       
-        endpoints.authenticationManager(authenticationManager).accessTokenConverter(jwtAccessTokenConverter());
+        endpoints.authenticationManager(authenticationManager).accessTokenConverter(jwtAccessTokenConverter())
+        	.userDetailsService(ldapUserDetailsManager());
     }
+	
+	@Bean
+    public DefaultSpringSecurityContextSource contextSource() {
+		return new DefaultSpringSecurityContextSource(ldapUrl);
+    }
+	
+	@Bean 
+	public FilterBasedLdapUserSearch userSearch() {
+		return new FilterBasedLdapUserSearch(ldapUserSearchBase, "uid={0}", contextSource());
+	}
+	
+	@Bean
+	public DefaultLdapAuthoritiesPopulator ldapAuthoritiesPopulator() {
+		DefaultLdapAuthoritiesPopulator authPopulator = new DefaultLdapAuthoritiesPopulator(contextSource(), ldapGroupSearchBase);
+		authPopulator.setGroupSearchFilter(ldapGroupSearchFilter);
+		return authPopulator;
+	}
+	
+	@Bean
+	public LdapUserDetailsService ldapUserDetailsManager() {
+		return new LdapUserDetailsService(userSearch(), ldapAuthoritiesPopulator());
+	}
     
     @Bean
 	public JwtAccessTokenConverter jwtAccessTokenConverter() {

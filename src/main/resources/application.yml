@@ -14,7 +14,9 @@ myapp:
     name: myappkey
     pass: myapp@uthk3y
   ldap:
-#    url: "ldap://127.0.0.1:10389/dc=myapp,dc=online"
+    url: "ldap://127.0.0.1:33389/dc=springframework,dc=org"
     ldif: "classpath:test.ldif"
+    user-search-base:
     user-dn-patterns: "uid={0}, ou=people"
-    group: "ou=groups"
+    group-search-base: "ou=groups"
+    group-search-filter: "(uniqueMember={0})"
