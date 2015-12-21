@@ -12,14 +12,25 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.ldap.DefaultSpringSecurityContextSource;
 import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
+import org.springframework.security.ldap.userdetails.LdapUserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsService;
+import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
+import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
+import org.springframework.security.oauth2.provider.token.TokenEnhancer;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
+
+import com.google.common.collect.Lists;
 
 @Configuration
 @EnableAuthorizationServer
@@ -81,8 +92,45 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
 	 */
 	@Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {       
-        endpoints.authenticationManager(authenticationManager).accessTokenConverter(jwtAccessTokenConverter())
+        endpoints.authenticationManager(authenticationManager)
+        	//.accessTokenConverter(jwtAccessTokenConverter())
+        	.tokenServices(defaultTokenServices())
         	.userDetailsService(ldapUserDetailsManager());
+    }
+	
+	@Autowired
+    private ClientDetailsService clientDetailsService;
+	
+	@Bean
+    public DefaultTokenServices defaultTokenServices() {
+        final DefaultTokenServices defaultTokenServices = new DefaultTokenServices();
+        defaultTokenServices.setTokenStore(tokenStore());
+        defaultTokenServices.setClientDetailsService(clientDetailsService);
+        defaultTokenServices.setTokenEnhancer(tokenEnhancerChain());
+        defaultTokenServices.setSupportRefreshToken(true);
+        return defaultTokenServices;
+    }
+	
+	@Bean
+    public TokenEnhancerChain tokenEnhancerChain() {
+        final TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(Lists.newArrayList(new AmbaTokenEnhancer(), jwtAccessTokenConverter()));
+        return tokenEnhancerChain;
+    }
+	
+	private static class AmbaTokenEnhancer implements TokenEnhancer {
+        @Override
+        public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
+            final DefaultOAuth2AccessToken result = new DefaultOAuth2AccessToken(accessToken);
+            final LdapUserDetails user = (LdapUserDetails) authentication.getPrincipal();
+//            result.getAdditionalInformation().put("userId", 9999);
+            return result;
+        }
+    }
+	
+	@Bean
+    public JwtTokenStore tokenStore() {
+        return new JwtTokenStore(jwtAccessTokenConverter());
     }
 	
 	@Bean
